@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas de Serviço</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function filtrarPorDia() {
+            const filtroDia = document.getElementById('filtro_dia').value;
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const diaCell = row.cells[3]; // Assuming Dia is the 4th column (index 3)
+                if (filtroDia === '' || diaCell.textContent === filtroDia) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Notas de Serviço</h1>
+
+        <!-- Mensagens flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-group">
+            <label for="filtro_dia">Filtrar por Dia:</label>
+            <input type="date" id="filtro_dia" name="filtro_dia">
+            <button type="button" onclick="filtrarPorDia()">Filtrar</button>
+        </div>
+
+        <a href="{{ url_for('create_note') }}" class="btn btn-primary">Criar Nova Nota</a>
+
+        {% set notas_abertas = notas | selectattr('status', 'equalto', 'Aberta') | list | sort(attribute='id') %}
+        {% set notas_finalizadas = notas | selectattr('status', 'equalto', 'Finalizada') | list | sort(attribute='id') %}
+
+        <h2>Notas Abertas</h2>
+        {% if notas_abertas %}
+            <table class="notes-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome do Cliente</th>
+        <th>Local do Atendimento</th>
+                        <th>Dia</th>
+         <th>Tipo de Serviço</th>
+                        <th>Observação</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nota in notas_abertas %}
+                        <tr>
+                            <td>{{ nota.id }}</td>
+                    <td>{{ nota.nome_cliente }}</td>
+                            <td>{{ nota.local_atendimento }}</td>
+                            <td>{{ nota.dia }}</td>
+                    <td>{{ nota.tipo_servico }}</td>
+                            <td>{{ nota.observacao }}</td>
+                            <td>R$ {{ "%.2f"|format(nota.valor) }}</td>
+                            <td>{{ nota.status }}</td>
+                            <td>
+                                <form action="{{ url_for('finalize_note', id=nota.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-success" onclick="return confirm('Tem certeza que deseja finalizar esta nota?')">Finalizar</button>
+                                </form>
+                                <a href="{{ url_for('edit_note', id=nota.id) }}" class="btn btn-secondary">Editar</a>
+                                <form action="{{ url_for('delete_note', id=nota.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta nota?')">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhuma nota aberta encontrada.</p>
+        {% endif %}
+
+        <h2>Notas Finalizadas</h2>
+        {% if notas_finalizadas %}
+            <table class="notes-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome do Cliente</th>
+                        <th>Local do Atendimento</th>
+                        <th>Dia</th>
+                        <th>Tipo de Serviço</th>
+                        <th>Observação</th>
+                        <th>Valor</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for nota in notas_finalizadas %}
+                        <tr>
+                            <td>{{ nota.id }}</td>
+                            <td>{{ nota.nome_cliente }}</td>
+                            <td>{{ nota.local_atendimento }}</td>
+                            <td>{{ nota.dia }}</td>
+                            <td>{{ nota.tipo_servico }}</td>
+                            <td>{{ nota.observacao }}</td>
+                            <td>R$ {{ "%.2f"|format(nota.valor) }}</td>
+                            <td>{{ nota.status }}</td>
+                            <td>
+                                <a href="{{ url_for('edit_note', id=nota.id) }}" class="btn btn-secondary">Editar</a>
+                                <form action="{{ url_for('delete_note', id=nota.id) }}" method="post" style="display:inline;">
+                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta nota?')">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhuma nota finalizada encontrada.</p>
+        {% endif %}
+
+        <h2>Valor das Notas Finalizadas por Dia</h2>
+        {% set valores_por_dia = {} %}
+        {% for nota in notas_finalizadas %}
+            {% if nota.dia not in valores_por_dia %}
+                {% set _ = valores_por_dia.update({nota.dia: 0}) %}
+            {% endif %}
+            {% set _ = valores_por_dia.update({nota.dia: valores_por_dia[nota.dia] + nota.valor}) %}
+        {% endfor %}
+        {% if valores_por_dia %}
+            <table class="notes-table">
+                <thead>
+                    <tr>
+                        <th>Dia</th>
+                        <th>Valor Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dia, valor in valores_por_dia.items() %}
+                        <tr>
+                            <td>{{ dia }}</td>
+                            <td>R$ {{ "%.2f"|format(valor) }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Nenhum valor encontrado.</p>
+        {% endif %}
+
+        <a href="{{ url_for('dashboard') }}" class="logout-link">Voltar ao Dashboard</a>
+    </div>
+</body>
+</html>

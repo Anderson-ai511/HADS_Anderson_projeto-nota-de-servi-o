@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Nota de Serviço</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <h1>Editar Nota de Serviço</h1>
+
+        <!-- Mensagens flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('edit_note', id=nota.id) }}" method="post">
+            <div class="form-group">
+                <label for="nome_cliente">Nome do Cliente:</label>
+                <input type="text" id="nome_cliente" name="nome_cliente" value="{{ nota.nome_cliente }}" required>
+            </div>
+            <div class="form-group">
+                <label for="local_atendimento">Local do Atendimento:</label>
+                <input type="text" id="local_atendimento" name="local_atendimento" value="{{ nota.local_atendimento }}" required>
+            </div>
+            <div class="form-group">
+                <label for="dia">Dia:</label>
+                <input type="date" id="dia" name="dia" value="{{ nota.dia }}" required>
+            </div>
+            <div class="form-group">
+                <label for="tipo_servico">Tipo de Serviço:</label>
+                <select id="tipo_servico" name="tipo_servico" required>
+                    <option value="Instalação" {% if nota.tipo_servico == 'Instalação' %}selected{% endif %}>Instalação</option>
+                    <option value="Manutenção" {% if nota.tipo_servico == 'Manutenção' %}selected{% endif %}>Manutenção</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="observacao">Observação:</label>
+                <textarea id="observacao" name="observacao" rows="4" placeholder="Descreva o que foi feito no chamado">{{ nota.observacao if nota.observacao else '' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="valor">Valor:</label>
+                <input type="number" id="valor" name="valor" step="0.01" value="{{ nota.valor }}" required>
+            </div>
+            <div class="form-group">
+                <label for="status">Status:</label>
+                <select id="status" name="status" required>
+                    <option value="Aberta" {% if nota.status == 'Aberta' %}selected{% endif %}>Aberta</option>
+                    <option value="Finalizada" {% if nota.status == 'Finalizada' %}selected{% endif %}>Finalizada</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Atualizar Nota</button>
+        </form>
+
+        <a href="{{ url_for('notes') }}" class="logout-link">Voltar às Notas</a>
+    </div>
+</body>
+</html>

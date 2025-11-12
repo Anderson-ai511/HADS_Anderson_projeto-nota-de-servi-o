@@ -22,8 +22,8 @@
         <p>Bem-vindo ao sistema! Você fez login com sucesso.</p>
 
         <div class="dashboard-buttons">
-            <button class="btn btn-primary">Criar Nova Nota</button>
-            <button class="btn btn-secondary">Ver Notas Existentes</button>
+            <a href="{{ url_for('create_note') }}" class="btn btn-primary">Criar Nova Nota</a>
+            <a href="{{ url_for('notes') }}" class="btn btn-secondary">Ver Notas Existentes</a>
         </div>
 
         <a href="{{ url_for('login') }}" class="logout-link">Logout</a>
