@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>Sistema de Nota de Serviço</h1>
+
+        <!-- Mensagens flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <p>Bem-vindo ao sistema! Você fez login com sucesso.</p>
+
+        <div class="dashboard-buttons">
+            <a href="{{ url_for('create_note') }}" class="btn btn-primary">Criar Nova Nota</a>
+            <a href="{{ url_for('notes') }}" class="btn btn-secondary">Ver Notas Existentes</a>
+        </div>
+
+        <a href="{{ url_for('login') }}" class="logout-link">Logout</a>
+    </div>
+</body>
+</html>

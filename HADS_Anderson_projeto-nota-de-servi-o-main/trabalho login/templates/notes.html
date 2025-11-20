@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notas de Serviço</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script>
+        function filtrarNotas() {
+            const filtroNome = document.getElementById('filtro_nome').value.toLowerCase();
+            const filtroLocal = document.getElementById('filtro_local').value.toLowerCase();
+            const filtroDia = document.getElementById('filtro_dia').value;
+            const filtroTipo = document.getElementById('filtro_tipo').value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const nomeCell = row.cells[1].textContent.toLowerCase();
+                const localCell = row.cells[2].textContent.toLowerCase();
+                const diaCell = row.cells[3].textContent;
+                const tipoCell = row.cells[4].textContent.toLowerCase();
+                if ((filtroNome === '' || nomeCell.includes(filtroNome)) &&
+                    (filtroLocal === '' || localCell.includes(filtroLocal)) &&
+                    (filtroDia === '' || diaCell === filtroDia) &&
+                    (filtroTipo === '' || tipoCell.includes(filtroTipo))) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function limparFiltros() {
+            document.getElementById('filtro_nome').value = '';
+            document.getElementById('filtro_local').value = '';
+            document.getElementById('filtro_dia').value = '';
+            document.getElementById('filtro_tipo').value = '';
+            filtrarNotas();
+        }
+    </script>
+</head>
+<body>
+    <div class="dashboard-container notes-page">
+        <h1>Notas de Serviço</h1>
+
+        <!-- Mensagens flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-group">
+            <label for="filtro_nome">Nome do Cliente:</label>
+            <input type="text" id="filtro_nome" name="filtro_nome" placeholder="Digite o nome" onkeyup="filtrarNotas()">
+            <label for="filtro_local">Local:</label>
+            <input type="text" id="filtro_local" name="filtro_local" placeholder="Digite o local" onkeyup="filtrarNotas()">
+            <label for="filtro_dia">Dia:</label>
+            <input type="date" id="filtro_dia" name="filtro_dia" onchange="filtrarNotas()">
+            <label for="filtro_tipo">Tipo de Serviço:</label>
+            <input type="text" id="filtro_tipo" name="filtro_tipo" placeholder="Digite o tipo" onkeyup="filtrarNotas()">
+            <button type="button" onclick="limparFiltros()">Limpar</button>
+        </div>
+
+        <a href="{{ url_for('create_note') }}" class="btn btn-primary">Criar Nova Nota</a>
+
+        {% set notas_abertas = notas | selectattr('status', 'equalto', 'Aberta') | list | sort(attribute='id') %}
+        {% set notas_finalizadas = notas | selectattr('status', 'equalto', 'Finalizada') | list | sort(attribute='id') %}
+
+        <div class="notes-container">
+            <div class="notes-column">
+                <h2>Notas Abertas</h2>
+                {% if notas_abertas %}
+                    <table class="notes-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome do Cliente</th>
+                <th>Local do Atendimento</th>
+                                <th>Dia</th>
+                 <th>Tipo de Serviço</th>
+                                <th>Observação</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nota in notas_abertas %}
+                                <tr>
+                                    <td>{{ nota.id }}</td>
+                    <td>{{ nota.nome_cliente }}</td>
+                                    <td>{{ nota.local_atendimento }}</td>
+                                    <td>{{ nota.dia }}</td>
+                    <td>{{ nota.tipo_servico }}</td>
+                                    <td>{{ nota.observacao }}</td>
+                                    <td>R$ {{ "%.2f"|format(nota.valor) }}</td>
+                                    <td>{{ nota.status }}</td>
+                                    <td>
+                                        <form action="{{ url_for('finalize_note', id=nota.id) }}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-success" onclick="return confirm('Tem certeza que deseja finalizar esta nota?')">Finalizar</button>
+                                        </form>
+                                        <a href="{{ url_for('edit_note', id=nota.id) }}" class="btn btn-secondary">Editar</a>
+                                        <form action="{{ url_for('delete_note', id=nota.id) }}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta nota?')">Excluir</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>Nenhuma nota aberta encontrada.</p>
+                {% endif %}
+            </div>
+
+            <div class="notes-column">
+                <h2>Notas Finalizadas</h2>
+                {% if notas_finalizadas %}
+                    <table class="notes-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome do Cliente</th>
+                                <th>Local do Atendimento</th>
+                                <th>Dia</th>
+                                <th>Tipo de Serviço</th>
+                                <th>Observação</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nota in notas_finalizadas %}
+                                <tr>
+                                    <td>{{ nota.id }}</td>
+                                    <td>{{ nota.nome_cliente }}</td>
+                                    <td>{{ nota.local_atendimento }}</td>
+                                    <td>{{ nota.dia }}</td>
+                                    <td>{{ nota.tipo_servico }}</td>
+                                    <td>{{ nota.observacao }}</td>
+                                    <td>R$ {{ "%.2f"|format(nota.valor) }}</td>
+                                    <td>{{ nota.status }}</td>
+                                    <td>
+                                        <a href="{{ url_for('edit_note', id=nota.id) }}" class="btn btn-secondary">Editar</a>
+                                        <form action="{{ url_for('delete_note', id=nota.id) }}" method="post" style="display:inline;">
+                                            <button type="submit" class="btn btn-danger" onclick="return confirm('Tem certeza que deseja excluir esta nota?')">Excluir</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>Nenhuma nota finalizada encontrada.</p>
+                {% endif %}
+            </div>
+        </div>
+
+
+
+        <a href="{{ url_for('dashboard') }}" class="logout-link">Voltar ao Dashboard</a>
+    </div>
+</body>
+</html>
